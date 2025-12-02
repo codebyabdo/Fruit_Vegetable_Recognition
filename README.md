@@ -95,22 +95,4 @@ Deploy on cloud (Streamlit Cloud, HuggingFace, Render)
 
 Add API endpoints for classification
 
-⭐ Support the Project
 
-If this project helped you, please star ⭐ the repository — it motivates further development!
-
-☕ Buy me a coffee:
-https://www.buymeacoffee.com/spidy20
-
-💙 Support via PayPal:
-https://www.paypal.me/spidy1820
-
-🙌 Acknowledgments
-
-Special thanks to:
-
-Kaggle dataset contributors
-
-The open-source community
-
-Everyone supporting ML education and innovation
