@@ -28,10 +28,15 @@ https://youtu.be/cF6rMXZcuCs
 ## 📁 Project Structure
 
 Fruit_Vegetable_Recognition/
+
 │
+
 ├── Fruits_Vegetable_Classification.py # Main Streamlit application
+
 ├── Fruit_Veg_Classification_Mobilenet.ipynb # Model training notebook
+
 ├── requirements.txt
+
 └── README.md
 
 
