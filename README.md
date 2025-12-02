@@ -109,13 +109,3 @@ Kaggle dataset contributors
 The open-source community
 
 Everyone supporting ML education and innovation
-
-
----
-
-If you'd like, I can also:
-
-✅ Add badges (contributors, license, stars, forks)  
-✅ Create a banner/header for your repo  
-✅ Write a detailed **model training documentation** page  
-Just tell me!
