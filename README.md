@@ -76,7 +76,10 @@ Balanced classes
 Multiple fruits & vegetables
 
 📸 Screenshots
-<img src="https://github.com/codebyabdo/Fruit_Vegetable_Recognition/blob/main/sc1.PNG"> <img src="https://github.com/codebyabdo/Fruit_Vegetable_Recognition/blob/main/sc2.PNG">
+
+<img src="https://github.com/codebyabdo/Fruit_Vegetable_Recognition/blob/main/sc1.PNG">
+<img src="https://github.com/codebyabdo/Fruit_Vegetable_Recognition/blob/main/sc2.PNG">
+
 💡 Future Improvements
 
 Add more classes
