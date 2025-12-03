@@ -1,7 +1,7 @@
 import streamlit as st
 from PIL import Image
-from tensorflow.keras.preprocessing.image import load_img, img_to_array # pyright: ignore[reportMissingImports]
-from tensorflow.keras.models import load_model # pyright: ignore[reportMissingImports]
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.models import load_model
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
@@ -182,19 +182,24 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+
 # ---- Ensure upload folder exists ----
 os.makedirs("upload_images", exist_ok=True)
 
-# ---- Load trained model with caching ----
+# ---- Load trained model ----
 @st.cache(allow_output_mutation=True)
 def load_model_cached():
     try:
-        model = load_model('FV.h5')
+        if not os.path.exists("FV.h5"):
+            st.error("Model file FV.h5 not found! Please place it in the project folder.")
+            return None
+
+        model = load_model("FV.h5")
         return model
+
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None
-
 
 
 model = load_model_cached()
@@ -211,18 +216,21 @@ labels = {
     33: 'tomato', 34: 'turnip', 35: 'watermelon'
 }
 
-# ---- Category lists ----
-fruits = ['Apple', 'Banana', 'Bello Pepper', 'Chilli Pepper', 'Grapes', 'Jalepeno', 'Kiwi',
-          'Lemon', 'Mango', 'Orange', 'Paprika', 'Pear', 'Pineapple',
-          'Pomegranate', 'Watermelon']
+# ---- Corrected Lists ----
+fruits = [
+    'Apple', 'Banana', 'Bell Pepper', 'Chilli Pepper', 'Grapes', 'Jalepeno', 
+    'Kiwi', 'Lemon', 'Mango', 'Orange', 'Paprika', 'Pear', 'Pineapple',
+    'Pomegranate', 'Watermelon'
+]
 
-vegetables = ['Beetroot', 'Cabbage', 'Capsicum', 'Carrot', 'Cauliflower', 'Corn',
-              'Cucumber', 'Eggplant', 'Ginger', 'Lettuce', 'Onion', 'Peas',
-              'Potato', 'Raddish', 'Soy Beans', 'Spinach', 'Sweetcorn',
-              'Sweetpotato', 'Tomato', 'Turnip']
+vegetables = [
+    'Beetroot', 'Cabbage', 'Capsicum', 'Carrot', 'Cauliflower', 'Corn',
+    'Cucumber', 'Eggplant', 'Ginger', 'Lettuce', 'Onion', 'Peas',
+    'Potato', 'Raddish', 'Soy Beans', 'Spinach', 'Sweetcorn',
+    'Sweetpotato', 'Tomato', 'Turnip'
+]
 
-
-# ---- Fetch calories from API ----
+# ---- Calorie API ----
 def fetch_calories(prediction):
     try:
         url = f"https://world.openfoodfacts.org/cgi/search.pl?search_terms={prediction}&search_simple=1&action=process&json=1"
@@ -231,26 +239,23 @@ def fetch_calories(prediction):
         if "products" not in response or len(response["products"]) == 0:
             return "Calories not found"
 
-        product = response["products"][0]
+        nutriments = response["products"][0].get("nutriments", {})
+        calories = nutriments.get("energy-kcal_100g")
 
-        # Look for calories per 100g
-        if "nutriments" in product and "energy-kcal_100g" in product["nutriments"]:
-            calories = product["nutriments"]["energy-kcal_100g"]
-            return f"{calories} calories"
-        else:
-            return "Calories not found"
+        return f"{calories} calories" if calories else "Calories not found"
 
-    except Exception as e:
-        print("API Error:", e)
+    except:
         return "Error fetching calories"
-
 
 # ---- Image processing ----
 def processed_img(img_path):
+    if model is None:
+        st.error("Model not loaded. Check model path or file name.")
+        return None
+
     try:
         img = load_img(img_path, target_size=(224, 224))
-        img = img_to_array(img)
-        img = img / 255.0
+        img = img_to_array(img) / 255.0
         img = np.expand_dims(img, axis=0)
 
         prediction = model.predict(img, verbose=0)
@@ -258,101 +263,41 @@ def processed_img(img_path):
         result = labels[y_class]
 
         return result.capitalize()
+
     except Exception as e:
         st.error(f"Error processing image: {e}")
         return None
 
-
 # ---- Main App ----
 def main():
-    # Header Section
     st.markdown('<h1 class="main-title">🍎 Fruit & Vegetable Classifier 🥦</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle">Upload an image to identify fruits/vegetables and get nutritional information</p>', unsafe_allow_html=True)
-    
-    # Create two columns for layout
+
     col1, col2 = st.columns([2, 1])
-    
+
     with col1:
-        # Upload Section
-        st.markdown('<div class="upload-container">', unsafe_allow_html=True)
-        st.markdown('### 📷 Upload Your Image')
-        st.markdown('Supported formats: JPG, PNG, JPEG')
-        img_file = st.file_uploader(" ", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if img_file is not None:
-            # Display uploaded image
+        st.subheader("📷 Upload Your Image")
+        img_file = st.file_uploader(" ", type=["jpg", "png", "jpeg"])
+
+        if img_file:
             img = Image.open(img_file).resize((300, 300))
-            st.image(img, caption="📸 Uploaded Image", use_column_width=True)
-            
-            # Save image
-            save_path = f'upload_images/{img_file.name}'
+            st.image(img, caption="Uploaded Image", use_column_width=True)
+
+            save_path = f"upload_images/{img_file.name}"
             with open(save_path, "wb") as f:
                 f.write(img_file.getbuffer())
-            
-            # Analyze button
-            if st.button("🔍 Analyze Image", key="analyze"):
-                with st.spinner('🔄 Analyzing image... Please wait'):
-                    result = processed_img(save_path)
-                    
-                    if result:
-                        # Display results
-                        if result in vegetables:
-                            card_class = "vegetable-card"
-                            badge_class = "vegetable-badge"
-                            badge_text = "🥬 VEGETABLE"
-                        else:
-                            card_class = "fruit-card"
-                            badge_class = "fruit-badge"
-                            badge_text = "🍎 FRUIT"
-                        
-                        st.markdown(f'<div class="result-card {card_class}">', unsafe_allow_html=True)
-                        st.markdown(f'<div class="category-badge {badge_class}">{badge_text}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div class="prediction-text">🎯 {result}</div>', unsafe_allow_html=True)
-                        st.markdown('</div>', unsafe_allow_html=True)
-                        
-                        # Fetch and display calories
-                        with st.spinner('📊 Fetching nutritional information...'):
-                            cal = fetch_calories(result)
-                        
-                        st.markdown('<div class="calorie-card">', unsafe_allow_html=True)
-                        st.markdown('### 🔥 Nutritional Information')
-                        st.markdown(f'### {cal} (per 100g)')
-                        st.markdown('</div>', unsafe_allow_html=True)
-    
+
+            if st.button("🔍 Analyze Image"):
+                result = processed_img(save_path)
+
+                if result:
+                    category = "Fruit" if result in fruits else "Vegetable"
+                    st.success(f"Prediction: {result} ({category})")
+
+                    calories = fetch_calories(result)
+                    st.info(f"Calories per 100g: {calories}")
+
     with col2:
-    # Information Section
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #667eea, #764ba2);
-                    padding: 2rem;
-                    border-radius: 20px;
-                    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-                    margin-bottom: 2rem;">
-            <h3 style="color: #fff;">🎯 How It Works</h3>
-            <p>This AI-powered classifier uses deep learning to identify fruits and vegetables from images.</p>
-
-            <h4 style="color: #FF6B35;">📊 Supported Items</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
-                <div style="background: rgba(255,255,255,0.85); padding: 1rem; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                    <h5>🍎 Fruits (15 types)</h5>
-                    <small>Apple, Banana, Grapes, Kiwi, Mango, Orange, Pineapple, Watermelon, and more...</small>
-                </div>
-                <div style="background: rgba(255,255,255,0.85); padding: 1rem; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                    <h5>🥦 Vegetables (20 types)</h5>
-                    <small>Carrot, Tomato, Potato, Onion, Cabbage, Cucumber, Bell Pepper, Spinach, and more...</small>
-                </div>
-            </div>
-
-            <h4 style="color: #FF69B4; margin-top: 20px;">💡 Tips for Best Results</h4>
-            <ul style="margin-left: 20px;">
-                <li>Use clear, well-lit images</li>
-                <li>Focus on a single item</li>
-                <li>Avoid blurry photos</li>
-                <li>Plain background works best</li>
-                <li>Close-up shots recommended</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
 
         # Statistics Section
         st.markdown("""
@@ -372,7 +317,5 @@ def main():
         """, unsafe_allow_html=True)
 
 
-
-# Run the app
 if __name__ == "__main__":
     main()
