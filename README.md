@@ -5,15 +5,6 @@
 
 A lightweight deep-learning application for classifying fruit and vegetable images using a fine-tuned MobileNet model and an interactive Streamlit web interface.
 
----
-
-## 🎥 Tutorial
-▶ **Watch the full project tutorial:**  
-https://youtu.be/cF6rMXZcuCs
-
-<img src="https://github.com/codebyabdo/Fruit_Vegetable_Recognition/blob/main/yt_thumb.jpg">
-
----
 
 ## 🚀 Features
 
